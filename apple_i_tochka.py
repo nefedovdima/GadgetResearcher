@@ -13,6 +13,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+
 def fetch_apple_i_tochka(query):
     options = Options()
     options.add_argument("--disable-blink-features=AutomationControlled")
@@ -111,7 +112,7 @@ def fetch_apple_i_tochka(query):
                 return False
 
         products_info = []
-        while True:
+        for i in range(4):
             has_products = parse_page()
             if not has_products:
                 break
@@ -123,6 +124,7 @@ def fetch_apple_i_tochka(query):
         return filtered_products
     finally:
         browser.quit()
+
 
 if __name__ == "__main__":
     query = input("Введите название товара: ")
