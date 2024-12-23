@@ -23,7 +23,7 @@ def sep_text_numb(text):
     output = " ".join(result)
     return output
 
-def fetch_nistone_products(query):
+def fetch_nistone(query):
     query = sep_text_numb(query)
     logging.info(f"Подготовка поиска по запросу: {query}")
 
@@ -55,14 +55,28 @@ def fetch_nistone_products(query):
     product_info = []
     logging.info("Начинается сбор информации о товарах")
 
+    # for block in product_blocks:
+    #     product_thumbs = block.find_elements(By.CLASS_NAME, "product-thumb.transition")
+    #     for product_thumb in product_thumbs:
+    #         name = product_thumb.find_element(By.CLASS_NAME, "catalog_product_name").text
+    #         price = product_thumb.find_element(By.CLASS_NAME, "catalog_product_price").text
+    #         price = int(price.replace(' ', '').replace('₽', ''))
+    #         product_info.append((name, price))
+    #         logging.info(f"Найден товар: {name}, Цена: {price}₽")
+    
     for block in product_blocks:
         product_thumbs = block.find_elements(By.CLASS_NAME, "product-thumb.transition")
         for product_thumb in product_thumbs:
             name = product_thumb.find_element(By.CLASS_NAME, "catalog_product_name").text
             price = product_thumb.find_element(By.CLASS_NAME, "catalog_product_price").text
-            price = int(price.replace(' ', '').replace('₽', ''))
+            try:
+                price = int(price.replace(' ', '').replace('₽', '').replace('——', '0'))
+            except ValueError:
+                logging.warning(f"Невозможно преобразовать цену: {price}")
+                continue
             product_info.append((name, price))
             logging.info(f"Найден товар: {name}, Цена: {price}₽")
+
 
     time.sleep(10)
     logging.info(f'Всего найдено товаров: {len(product_info)}')

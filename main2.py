@@ -13,10 +13,13 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram import CallbackQuery
 
-from biggeek import fetch_biggeek_products
-from find_products_nistone import fetch_nistone_products
-
+from biggeek import fetch_biggeek
+from nistone import fetch_nistone
+from apple_market import fetch_apple_market
+from apple_i_tochka import fetch_apple_i_tochka
 from aiogram.fsm.storage.base import BaseStorage
+from megafon import fetch_megafon
+from store77 import fetch_store_77
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -33,8 +36,12 @@ class FindProduct(StatesGroup):
     ask_shop = State()
     biggeek = State()
     nistone = State()
+    apple_i_tochka = State()
     all_shopes = State()
     found_item = State()
+    apple_market = State()
+    store_77 = State()
+    megafon = State()
 
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 form_router = Router()
@@ -90,6 +97,10 @@ async def ask_name_handler(message: Message, state: FSMContext) -> None:
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text='biggeek', callback_data=str(FindProduct.biggeek))],
         [InlineKeyboardButton(text='nistone', callback_data=str(FindProduct.nistone))],
+        [InlineKeyboardButton(text='apple_i_tochka', callback_data=str(FindProduct.apple_i_tochka))],
+        [InlineKeyboardButton(text='apple_market', callback_data=str(FindProduct.apple_market))],
+        [InlineKeyboardButton(text='megafon', callback_data=str(FindProduct.megafon))],
+        [InlineKeyboardButton(text='store_77', callback_data=str(FindProduct.store_77))],
         [InlineKeyboardButton(text='all', callback_data=str(FindProduct.all_shopes))],
     ])
     await bot.send_message(
@@ -104,7 +115,7 @@ async def find_biggeek(callback_query: CallbackQuery, state: FSMContext) -> None
     await bot.send_message(callback_query.message.chat.id, 'Идет поиск')
     try:
         name = (await state.get_data())['name']
-        result = fetch_biggeek_products(name)
+        result = fetch_biggeek(name)
         await state.set_state(FindProduct.found_item)
         await state.set_data({'result': json.dumps(result)})
         await bot.send_message(callback_query.message.chat.id, 'Товар найден')
@@ -120,7 +131,7 @@ async def find_nistone(callback_query: CallbackQuery, state: FSMContext) -> None
     await bot.send_message(callback_query.message.chat.id, 'Идет поиск')
     try:
         name = (await state.get_data())['name']
-        result = fetch_nistone_products(name)
+        result = fetch_nistone(name)
         await state.set_state(FindProduct.found_item)
         await state.set_data({'result': json.dumps(result)})
         await bot.send_message(callback_query.message.chat.id, 'Товар найден')
@@ -130,6 +141,136 @@ async def find_nistone(callback_query: CallbackQuery, state: FSMContext) -> None
         await bot.send_message(callback_query.message.chat.id, 'Товар не найден')
         await ask_name(callback_query.message.chat.id, state)
 
+
+# @form_router.callback_query(FindProduct.ask_shop, lambda callback_query: callback_query.data == str(FindProduct.apple_market))
+# async def find_apple_market(callback_query: CallbackQuery, state: FSMContext) -> None:
+#     logger.info("Начало поиска в магазине apple_market")
+#     await bot.send_message(callback_query.message.chat.id, 'Идет поиск')
+#     try:
+#         name = (await state.get_data())['name']
+#         result = fetch_apple_market(name)
+#         await state.set_state(FindProduct.found_item)
+#         await state.set_data({'result': json.dumps(result)})
+#         await bot.send_message(callback_query.message.chat.id, 'Товар найден')
+#         await send_imagine(callback_query.message.chat.id)
+#     except Exception as e:
+#         logger.error(f"Ошибка при поиске в apple_market: {e}")
+#         await bot.send_message(callback_query.message.chat.id, 'Товар не найден')
+#         await ask_name(callback_query.message.chat.id, state)
+
+@form_router.callback_query(FindProduct.ask_shop, lambda callback_query: callback_query.data == str(FindProduct.apple_market))
+async def find_apple_market(callback_query: CallbackQuery, state: FSMContext) -> None:
+    logger.info("Начало поиска в магазине apple_market")
+    await bot.send_message(callback_query.message.chat.id, 'Идет поиск')
+    try:
+        name = (await state.get_data())['name']
+        result = fetch_apple_market(name)  # Ожидаем список кортежей, например: [("iPhone", 5), ("MacBook", 2)]
+
+        if not result:
+            raise ValueError("Товар не найден")
+
+        # Вычисляем общее количество товаров
+        total_items = len(result)
+
+        # Формируем строку с результатами
+        items_list = "\n".join([
+            f"{index + 1}. {item[0]} - <b>{item[1]} шт.</b>" for index, item in enumerate(result)
+        ])
+
+        # Сохраняем результат в состояние
+        await state.set_state(FindProduct.found_item)
+        await state.set_data({'result': json.dumps(result)})
+
+        # Отправляем сообщение с общим количеством и списком товаров
+        await bot.send_message(
+            callback_query.message.chat.id,
+            f"<b>Найдено товаров: {total_items}</b>\n",
+            parse_mode="HTML"
+        )
+
+        await send_imagine(callback_query.message.chat.id)  # Предполагаем, что эта функция отображает изображения товаров
+
+    except Exception as e:
+        logger.error(f"Ошибка при поиске в apple_market: {e}")
+        await bot.send_message(callback_query.message.chat.id, 'Товар не найден')
+        await ask_name(callback_query.message.chat.id, state)
+
+
+
+
+# @form_router.callback_query(FindProduct.ask_shop, lambda callback_query: callback_query.data == str(FindProduct.all_shopes))
+# async def find_all_shopes(callback_query: CallbackQuery, state: FSMContext) -> None:
+#     logger.info("Начало поиска во всех магазинах")
+#     await bot.send_message(callback_query.message.chat.id, 'Идет поиск')
+#     try:
+#         name = (await state.get_data())['name']
+#         result_biggeek = fetch_biggeek_products(name)
+#         result_nistone = fetch_nistone_products(name)
+#         result_apple_market = fetch_apple_market(name)
+#         result = result_biggeek + result_nistone + result_apple_market
+#         await state.set_state(FindProduct.found_item)
+#         await state.set_data({'result': json.dumps(result)})
+#         await bot.send_message(callback_query.message.chat.id, 'Товар найден')
+#         await send_imagine(callback_query.message.chat.id)
+#     except Exception as e:
+#         logger.error(f"Ошибка при поиске во всех магазинах: {e}")
+#         await bot.send_message(callback_query.message.chat.id, 'Товар не найден')
+#         await ask_name(callback_query.message.chat.id, state)
+
+
+@form_router.callback_query(FindProduct.ask_shop, lambda callback_query: callback_query.data == str(FindProduct.apple_i_tochka))
+async def find_apple_i_tochka(callback_query: CallbackQuery, state: FSMContext) -> None:
+    logger.info("Начало поиска в магазине apple_i_tochka")
+    await bot.send_message(callback_query.message.chat.id, 'Идет поиск в магазине apple_i_tochka')
+    try:
+        name = (await state.get_data())['name']
+        result = fetch_apple_i_tochka(name)
+        await state.set_state(FindProduct.found_item)
+        await state.set_data({'result': json.dumps(result)})
+        await bot.send_message(callback_query.message.chat.id, 'Товар найден')
+        await send_imagine(callback_query.message.chat.id)
+    except Exception as e:
+        logger.error(f"Ошибка при поиске в apple_i_tochka: {e}")
+        await bot.send_message(callback_query.message.chat.id, 'Товар не найден')
+        await ask_name(callback_query.message.chat.id, state)
+
+
+
+@form_router.callback_query(FindProduct.ask_shop, lambda callback_query: callback_query.data == str(FindProduct.megafon))
+async def find_megafon(callback_query: CallbackQuery, state: FSMContext) -> None:
+    logger.info("Начало поиска в магазине megafon")
+    await bot.send_message(callback_query.message.chat.id, 'Идет поиск в магазине megafon')
+    try:
+        name = (await state.get_data())['name']
+        result = fetch_megafon(name)
+        await state.set_state(FindProduct.found_item)
+        await state.set_data({'result': json.dumps(result)})
+        await bot.send_message(callback_query.message.chat.id, 'Товар найден')
+        await send_imagine(callback_query.message.chat.id)
+    except Exception as e:
+        logger.error(f"Ошибка при поиске в apple_i_tochka: {e}")
+        await bot.send_message(callback_query.message.chat.id, 'Товар не найден')
+        await ask_name(callback_query.message.chat.id, state)
+
+
+
+@form_router.callback_query(FindProduct.ask_shop, lambda callback_query: callback_query.data == str(FindProduct.store_77))
+async def find_megafon(callback_query: CallbackQuery, state: FSMContext) -> None:
+    logger.info("Начало поиска в магазине store_77")
+    await bot.send_message(callback_query.message.chat.id, 'Идет поиск в магазине store_77')
+    try:
+        name = (await state.get_data())['name']
+        result = fetch_store_77(name)
+        await state.set_state(FindProduct.found_item)
+        await state.set_data({'result': json.dumps(result)})
+        await bot.send_message(callback_query.message.chat.id, 'Товар найден')
+        await send_imagine(callback_query.message.chat.id)
+    except Exception as e:
+        logger.error(f"Ошибка при поиске в apple_i_tochka: {e}")
+        await bot.send_message(callback_query.message.chat.id, 'Товар не найден')
+        await ask_name(callback_query.message.chat.id, state)
+
+
 @form_router.callback_query(FindProduct.ask_shop, lambda callback_query: callback_query.data == str(FindProduct.all_shopes))
 async def find_all_shopes(callback_query: CallbackQuery, state: FSMContext) -> None:
     logger.info("Начало поиска во всех магазинах")
@@ -138,23 +279,37 @@ async def find_all_shopes(callback_query: CallbackQuery, state: FSMContext) -> N
         name = (await state.get_data())['name']
         result_biggeek = fetch_biggeek_products(name)
         result_nistone = fetch_nistone_products(name)
-        result = result_biggeek + result_nistone
+        result_apple_market = fetch_apple_market(name)
+        result = result_biggeek + result_nistone + result_apple_market
+
+        # Формируем строку с результатами
+        result_str = "\n".join([
+            f"{index + 1}. {item[0]} - <b>{item[1]}</b> шт." for index, item in enumerate(result)
+        ])
+
         await state.set_state(FindProduct.found_item)
         await state.set_data({'result': json.dumps(result)})
-        await bot.send_message(callback_query.message.chat.id, 'Товар найден')
+
+        await bot.send_message(
+            callback_query.message.chat.id,
+            result_str,
+            parse_mode="HTML"
+        )
         await send_imagine(callback_query.message.chat.id)
+
     except Exception as e:
         logger.error(f"Ошибка при поиске во всех магазинах: {e}")
         await bot.send_message(callback_query.message.chat.id, 'Товар не найден')
         await ask_name(callback_query.message.chat.id, state)
 
+
+
 async def send_imagine(chat_id) -> None:
     logger.info("Отправка клавиатуры отображения")
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text='Порядок возрастания цены', callback_data='x1')],
-        [InlineKeyboardButton(text='Порядок возрастания цены 2', callback_data='x2')],
-        [InlineKeyboardButton(text='Порядок возрастания цены 3', callback_data='x3')],
-        [InlineKeyboardButton(text='Порядок возрастания цены 4', callback_data='x4')],
+        [InlineKeyboardButton(text='Вывести первые 10', callback_data='x1')],
+        [InlineKeyboardButton(text='5 самых дешевых', callback_data='x2')],
+        [InlineKeyboardButton(text='Самый дешевый', callback_data='x3')],
         [InlineKeyboardButton(text='Назад', callback_data=str(FindProduct.ask_name))],
     ])
     await bot.send_message(chat_id, 'Выведите желаемое отображение', reply_markup=kb)
@@ -168,25 +323,73 @@ async def callback_query_handler(callback_query: CallbackQuery, state: FSMContex
         logger.warning(f"Ошибка при удалении сообщения: {e}")
     await ask_name(callback_query.message.chat.id, state)
 
+
+
 @form_router.callback_query(lambda callback_query: callback_query.data == 'x1')
 async def callback_query_handler(callback_query: CallbackQuery, state: FSMContext) -> None:
     logger.info("Обработка сортировки x1")
     result = json.loads((await state.get_data())['result'])
-    result_str = ''
-    for item in result:
-        result_str += f"{item[0]} {item[1]}\n"
-    await bot.send_message(callback_query.message.chat.id, result_str)
+
+    # Формируем строку с результатами
+    result_str = "\n".join([
+        f"{index + 1}. {item[0]} - <b>{item[1]}</b> шт." for index, item in enumerate(result[:10])
+    ])
+
+    await bot.send_message(
+        callback_query.message.chat.id,
+        result_str,
+        parse_mode="HTML"
+    )
     await send_imagine(callback_query.message.chat.id)
 
+
+# @form_router.callback_query(lambda callback_query: callback_query.data == 'x2')
+# async def callback_query_handler(callback_query: CallbackQuery, state: FSMContext) -> None:
+#     logger.info("Обработка сортировки x2")
+#     result = sorted(json.loads((await state.get_data())['result']), key=lambda x: x[1])[:5]
+#     result_str = ''
+#     for item in result:
+#         result_str += f"{item[0]} {item[1]}\n"
+#     await bot.send_message(callback_query.message.chat.id, result_str)
+#     await send_imagine(callback_query.message.chat.id)
+
+
 @form_router.callback_query(lambda callback_query: callback_query.data == 'x2')
-async def callback_query_handler(callback_query: CallbackQuery, state: FSMContext) -> None:
+async def callback_query_handler_x2(callback_query: CallbackQuery, state: FSMContext) -> None:
     logger.info("Обработка сортировки x2")
     result = sorted(json.loads((await state.get_data())['result']), key=lambda x: x[1])[:5]
-    result_str = ''
-    for item in result:
-        result_str += f"{item[0]} {item[1]}\n"
-    await bot.send_message(callback_query.message.chat.id, result_str)
+
+    # Формируем строку с результатами
+    result_str = "\n".join([
+        f"{index + 1}. {item[0]} - <b>{item[1]}</b> шт." for index, item in enumerate(result)
+    ])
+
+    await bot.send_message(
+        callback_query.message.chat.id,
+        result_str,
+        parse_mode="HTML"
+    )
     await send_imagine(callback_query.message.chat.id)
+
+
+@form_router.callback_query(lambda callback_query: callback_query.data == 'x3')
+async def callback_query_handler_x3(callback_query: CallbackQuery, state: FSMContext) -> None:
+    logger.info("Обработка сортировки x3")
+    result = sorted(json.loads((await state.get_data())['result']), key=lambda x: x[1])[:1]
+
+    # Формируем строку с результатами
+    result_str = "\n".join([
+        f"{index + 1}. {item[0]} - <b>{item[1]}</b> шт." for index, item in enumerate(result)
+    ])
+
+    await bot.send_message(
+        callback_query.message.chat.id,
+        result_str,
+        parse_mode="HTML"
+    )
+    await send_imagine(callback_query.message.chat.id)
+
+
 
 @form_router.message()
 async def echo_handler(message: Message) -> None:

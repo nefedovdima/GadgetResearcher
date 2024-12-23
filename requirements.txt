@@ -3,3 +3,4 @@ undetected-chromedriver
 python-telegram-bot
 aiogram
 setuptools
+webdriver_manager
