@@ -347,7 +347,7 @@ async def callback_query_handler(callback_query: CallbackQuery, state: FSMContex
 
     # Формируем строку с результатами
     result_str = "\n".join([
-        f"{index + 1}. {item[0]} - <b>{item[1]}</b> шт." for index, item in enumerate(result[:10])
+        f"{index + 1}. {item[0]} - <b>{item[1]}</b> руб." for index, item in enumerate(result[:10])
     ])
 
     await bot.send_message(
@@ -393,7 +393,7 @@ async def callback_query_handler_x2(callback_query: CallbackQuery, state: FSMCon
 
     # Формируем строку с результатами
     result_str = "\n".join([
-        f"{index + 1}. {item[0]} - <b>{item[1]:,.2f}</b> шт." for index, item in enumerate(result)
+        f"{index + 1}. {item[0]} - <b>{item[1]:,.2f}</b> руб." for index, item in enumerate(result)
     ])
 
     await bot.send_message(
@@ -402,6 +402,7 @@ async def callback_query_handler_x2(callback_query: CallbackQuery, state: FSMCon
         parse_mode="HTML"
     )
     await send_imagine(callback_query.message.chat.id)
+
 
 
 @form_router.callback_query(lambda callback_query: callback_query.data == 'x3')
@@ -438,7 +439,7 @@ async def callback_query_handler_x3(callback_query: CallbackQuery, state: FSMCon
 
     # Формируем строку с результатами
     result_str = "\n".join([
-        f"{index + 1}. {item[0]} - <b>{item[1]:,.2f}</b> шт." for index, item in enumerate(result)
+        f"{index + 1}. {item[0]} - <b>{item[1]:,.2f}</b> руб." for index, item in enumerate(result)
     ])
 
     await bot.send_message(
