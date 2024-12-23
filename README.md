@@ -131,7 +131,8 @@ bot/
    git clone https://github.com/your_username/GadgetResearcherBot.git
    cd GadgetResearcher
 ```
-2. Установите зависимости:  
+2. Установите зависимости:
+```bash 
    pip install -r requirements.txt
 ```
 3. Убедитесь, что у вас установлен Python версии 3.8 или выше. Для проверки версии используйте:
