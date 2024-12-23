@@ -4,3 +4,5 @@ python-telegram-bot
 aiogram
 setuptools
 webdriver_manager
+pytest
+pytest-asyncio
