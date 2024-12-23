@@ -129,8 +129,8 @@ bot/
 1. Клонируйте репозиторий:  
    ```bash
    git clone https://github.com/your_username/GadgetResearcherBot.git
-```
    cd GadgetResearcher
+```
 2. Установите зависимости:  
    ```bash
    pip install -r requirements.txt
@@ -139,4 +139,4 @@ bot/
 ```bash
 python --version
 ```
-Убедитесь, что у вас установлен браузер Google Chrome, и его версия совместима с последним chromedriver, который автоматически загружается с помощью webdriver_manager.
+4. Убедитесь, что у вас установлен браузер Google Chrome, и его версия совместима с последним chromedriver, который автоматически загружается с помощью webdriver_manager.
