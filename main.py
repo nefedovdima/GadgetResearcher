@@ -22,14 +22,14 @@ from aiogram.fsm.storage.base import BaseStorage
 from megafon import fetch_megafon
 from store77 import fetch_store_77
 
-# Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Bot token can be obtained via https://t.me/BotFather
-TOKEN='8106823503:AAGRIrMz5uBP-h4arwLXRTabASAaThEhNR4'
 
-# All handlers should be attached to the Router (or Dispatcher)
+TOKEN = getenv("TOKEN")
+if not TOKEN:
+    logger.error("Bot token is not set. Please set the TOKEN environment variable.")
+    sys.exit(1)
 
 class FindProduct(StatesGroup):
     start = State()
